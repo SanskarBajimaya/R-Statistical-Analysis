@@ -1,0 +1,283 @@
+---
+title: "Statistics Inference"
+author: "Sam"
+date: "2025-01-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+```
+
+## Part 1: Simulation exercise
+
+<br>
+
+*Overview*
+<br>
+
+This report presents an in-depth analysis of the exponential distribution using the R programming language, with a specific focus on its comparison to the Central Limit Theorem. We conducted 1000 simulations with a rate parameter (lambda) set at 0.2. Through this analysis, we compare the theoretical mean and standard deviation of the exponential distribution (1/lambda) with the theoretical mean and standard deviation of the distribution of averages of 40 exponentials.
+
+<br><br>
+
+### Comparing sample mean and theoretical mean of the distribution
+
+<br>
+
+##### Setting up the parameters:
+
+<br>
+```{r}
+lambda <- 0.2
+n <- 40
+simulations <-1000
+```
+
+  <br>
+
+##### Performing 1000's simulations:
+<br>
+  **set.seed** : reproduces random numbers
+  
+  **replicate** : repeats the simulation process for a defined number of time.
+  
+  **rexp(n,lambda)** : generates "n" random numbers from an exponential distribution.
+  
+  **mean(rexp(...)** : calculates the sample means for each simulations.
+<br>
+```{r}
+set.seed(123)
+simulated_means <-replicate(simulations,mean(rexp(n,lambda)))
+```
+<br>
+Comparing sample mean with theoratical mean:
+```{r}
+theory_mean <- 1/lambda
+sample_mean <- mean(simulated_means)
+```
+<br>
+```{r}
+theory_mean
+sample_mean
+```
+Here the theoretical mean and our simulated mean are nearly equal for one decimal space.
+
+<br><br>
+
+## Comparing sample variance with theoretical variance
+
+<br>
+
+```{r}
+theory_variance <- (1/lambda)^2/n
+sample_variance <- var(simulated_means)
+
+```
+
+```{r}
+theory_variance
+sample_variance
+
+```
+
+Here the theoretical variance and our simulated variance is nearly equal for one decimal space. However, the theoretical variance is greater than our simulated variance.
+
+<br><br>
+
+## Checking for approximate normality
+
+<br>
+Below is the histogram of simulated means:
+
+```{r}
+hist(simulated_means, probability =TRUE, main ="Distribution of simulated means", xlab = "Means of 40 exponentials", col = "lightblue")
+```
+
+<br>
+The function dnorm returns the value of the probability density function for the normal distribution given parameters for x
+, μ
+, and σ
+
+If we collect a large amounts of data of random exponential from a distribution and plot them as:
+<br>
+
+*x values* ranging from minimum simulated mean to maximum simulated mean with length of 1000
+<br>
+*y values* as normal density values which is taken from the probability density function for the normal distribution having x values, theoretical mean and theoretical standard deviation.
+<br>
+
+Plotting them as a line over our histogram of "Distribution of simulated means". We get this plot:
+
+```{r, plot}
+x_vals <- seq(min(simulated_means), max(simulated_means), length.out = 1000)
+normal_density <- dnorm(x_vals, mean = theory_mean, sd= sqrt(theory_variance))
+hist(simulated_means, probability =TRUE, main ="Distribution of simulated means", xlab = "Means of 40 exponentials", col = "lightblue")
+lines(x_vals, normal_density, col ="red", lwd=2)
+
+```
+<br>
+Here we see that our simulated means of 40 exponential data is approximately similar to the line fitting over it consisting of the normal distribution. This shows that our simulated means of 40 exponential data follows the expected normal distribution. <br><br>
+
+## Comparing distributions of raw exponentials and sample mean
+
+If we have collected 40 exponential numbers to generate per simulation and run 1000 simulation and plot a histogram representing the probability density (i.e, the area under the histogram sums up to 1). 
+<br> <br>
+Then, when we overlay a line/curve on the histogram as: <br>
+*x values* ranging from minimum simulated mean to maximum simulated mean with length of 1000 <br>
+*y values* as probability density function of the exponential distribution for a range of x values, using the given lambda rate of 0.2. <br>
+
+
+```{r}
+random_exponentials <- rexp(n*simulations, lambda)
+hist(random_exponentials, probability= TRUE, main = "Distribution of Random Exponentials", xlab = "Exponential values" , col="lightgreen")
+exp_density <- dexp(x_vals, rate =lambda)
+lines(x_vals, exp_density, col="blue", lwd=2)
+
+```
+<br>
+The histogram shows how the generated data is distributed. The blue line shows the theoretical distribution of an exponential random variable with rate (lambda) as 0.2. <br>
+By comparing the histogram with the line, we find that our random data follows the expected exponential distribution. <br><br><br>
+
+## Part 2: Basic Inferential Data Analysis
+<br>
+
+## Introduction
+<br>
+
+*Objective of the project* 
+<br>
+
+
+
+*Outline of the tasks to be performed*
+<br>
+In this report, we will perform loading the data set, providing brief discripton of the data set including varibles and their type, exploratory Data analysis where we visualize the data and lastly, perform statistical analysis including Hypothesis testing and Confidence interval.
+<br>
+
+<br><br>
+
+## Loading and Understanding the Data
+
+<br>
+*Loading the dataset in R*
+<br>
+```{r}
+data("ToothGrowth")
+head(ToothGrowth)
+```
+<br>
+
+*Preliminary examination of the data (e.g., data types, missing values)*
+<br>
+
+The data set "ToothGrowth" has has 3 variables (len, supp and dose) with 60 objects. For more detailed explanation, we see down below:
+
+<br>
+
+```{r}
+summary(ToothGrowth)
+```
+<br>
+
+*Basic summary statistics*
+<br>
+
+<br><br>
+
+## Exploratory Data Analysis
+
+<br>
+*Visualization of the data*
+<br>
+
+```{r ggplot2}
+
+ggplot(ToothGrowth, aes(x= supp, y= len)) +
+geom_boxplot() +
+labs(title = "Tooth Growth by Supplement Type", x = "Supplement", y = "Tooth Length")  
+```
+<br>
+
+In this box plot with *x values* as supplements namely OJ and VC and *y values* as tooth length, we observe that in the given 60 samples, the median of tooth length of samples who took OJ is higher than those samples who took VC.  
+<br>
+
+<br>
+```{r ggplot2 _plot2}
+ggplot(ToothGrowth, aes(x= factor(dose), y= len)) +
+geom_boxplot() +
+labs(title = "Tooth Growth by Dose", x = "Dose", y = "Tooth Length")  
+```
+<br>
+
+In this box plot with *x values* as doses amount namely 0.5, 1.0 and 2.0 and *y values* as tooth length, we observe that in the given 60 samples, the fraction of samples who took 0.5 dose has relatively the least median tooth length, the fraction of samples who took 2.0 dose has relatively the highest median of tooth length and the fraction of samples who took 1.0 dose has relatively in between median of tooth length compared samples taking 0.5 and 2 dose.
+<br><br>
+In this box plot, we also see an outlier in the group of 0.5 dose having the Tooth length of 21.5. This might be an error while collecting the data but we need to acknowledge the outlier because it may impact the statistical analysis by skewing the results of calculations like mean and standard deviation.
+<br><br>
+Let us consider the same data set but finding and removing the outlier and visualizing the data set again. We know that the outlier lies above tooth length 20 having the dose value of 0.5.
+<br>
+```{r}
+row_num <- which(ToothGrowth$len > 20 & ToothGrowth$dose == 0.5)
+ToothGrowth2 <- ToothGrowth[-row_num,]
+```
+ <br>
+ 
+ Here the data frame "ToothGrowth2" is the same data set without the outlier, if we visualize the box plot again. We see that the outlier is removed. Arrangig them side by side we see these graphs:
+ 
+```{r, ggplot2, gridExtra}
+DosePlot1 <-ggplot(ToothGrowth, aes(x= factor(dose), y= len)) +
+ geom_boxplot() +
+ labs(title = "Tooth Growth by Dose (with outlier)", x = "Dose", y = "Tooth Length")
+DosePlot2 <-ggplot(ToothGrowth2, aes(x= factor(dose), y= len)) +
+ geom_boxplot() +
+ labs(title = "Tooth Growth by Dose (Without outlier)", x = "Dose", y = "Tooth Length")
+grid.arrange(DosePlot1, DosePlot2, ncol = 2)
+```
+ <br>
+ 
+ Here we find that the other factors (mean, quartiles,etc) are not changed by a lot so the outlier doesn't tend to change a lot of other factors. However, we have to consider doing statistical analysis of both (with and without outliers) data frames.
+
+*Descriptive statistics*
+<br>
+
+<br><br>
+
+## Statistical Analysis
+<br>
+
+*Confidence Interval*
+<br>
+
+*Hypothesis Testing*
+<br>
+We'll perform the t.test or two-sample t-test on the length of teeth data, comparing the two groups in the suppliments variable (OJ v/s VC). We'll be testing if the mean tooth length is different between the two suppliments.
+
+```{r}
+t.test(len ~ supp, data = ToothGrowth)
+```
+<br>
+The null hyposthesis is that there is no difference between the means of the two groups. <br>
+The alternative hypothesis is that there is a difference in the means between the two groups.<br><br>
+
+The P-value in this test is 0.06063 which is larger than 0.05 (at 5%significance level), which indicates that *the null hypothesis is true*. This means that we fail to reject the null hypothesis and the data suggests that the means of two groups (OJ and VC) might be same. In other words, there is not enough evidence to say that the mean lengths are significantly different between the OJ and VC groups. <br><br>
+
+The confidence interval at 95% level mentions that the differences in means of two groups (mean of OJ - mean of VC)is in between: <br>
+-0.171 to 7.57 <br>
+
+*Since the interval contains 0, this means that the data does not rule out the possibility of no difference in means (which aligns with the p-value above).* <br>
+
+
+
+
+
+
+
+
+5.	Conclusion
+o	Summary of findings
+o	Assumptions and limitations
+o	Recommendations for future analysis
+
+
+
